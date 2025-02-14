@@ -20,10 +20,10 @@ export class UserController {
     async getUserById(@Headers("authorization") authHeader:string){
         const decoded=await firstValueFrom(this.authService.send("verify-token",{authHeader}))
         const userId=decoded.id;
-        console.log(decoded);
+  
         
         const getUserbyId=await lastValueFrom(this.userService.send("user-detail",userId))
-        console.log(getUserbyId);
+     
         if(getUserbyId.message=='Thành công'){
           const data={
             user_id:userId,

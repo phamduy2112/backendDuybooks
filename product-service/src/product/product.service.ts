@@ -8,35 +8,32 @@ constructor(
     private readonly prismaService:PrismaService
 ){}
 
-async createBlog(dataCreate){
+async createBlog(dataCreate) {
     try {
-        const {user_id,content,visibility,file}=dataCreate
+        const { user_id, content, visibility, files } = dataCreate; // Đổi 'file' thành 'files' để hỗ trợ nhiều ảnh
 
-        const createBlog = await this.prismaService.posts.create({
-            data:{
-                user_id,
-                content,
-                visibility
-            }
-        })
-        const createPostImage=await this.prismaService.post_images.create({
-            data:{
-                post_id:createBlog.id,
-                image_url:file,
-            }
-        })
-        const dataPost={
-            ...createBlog,
-            ...createPostImage
-        }
+        const newPost = await this.prismaService.$transaction(async (prisma) => {
+            const post = await prisma.posts.create({
+                data: { user_id, content, visibility }
+            });
 
-        return responseSend(dataPost, "Thêm bài viết thành công", 200);
-     
+            if (files && files.length > 0) {
+                await prisma.post_images.createMany({
+                    data: files.map(file => ({
+                        post_id: post.id,
+                        image_url: file
+                    }))
+                });
+            }
+
+            return post;
+        });
+
+        return responseSend(newPost, "Thêm bài viết thành công", 200);
     } catch (error) {
         console.log(error);
-        return responseSend(null,"Lỗi server",500)
+        return responseSend(null, "Lỗi server", 500);
     }
-  
 }
 async getPostsByVisibility(userId: number, visibility: string) {
     let posts;

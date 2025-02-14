@@ -28,30 +28,31 @@ return this.productService.createBlog(data);
 
 @MessagePattern('get-post')
 async getPost(data){
-return this.productService.getPostsByVisibility(1,'duy')
+  const {id,visibility}=data
+return this.productService.getPostsByVisibility(id,visibility)
 }
 
-@MessagePattern('update-blog')
+@MessagePattern('update-post')
 async updateBlog(data) {
   return this.productService.updateBlog(data);
 }
 
-@MessagePattern('detele-blog')
+@MessagePattern('detele-post')
 async deleteBlog(data) {
   return this.productService.deleteBlog(data);
 }
 
-@MessagePattern('get-save-blog')
+@MessagePattern('get-save-post')
 async getSaveBlog(data) {
   return this.productService.getSavePostByIdUser(data);
 }
 
-@MessagePattern('save-post')
+@MessagePattern('create-save-post')
 async savePost(data) {
   return this.productService.savePost(data);
 }
 
-@MessagePattern('delete-post')
+@MessagePattern('delete-save-post')
 async deleteSavePost(data){
 return this.productService.deleteSavePost(data);
 }
