@@ -22,7 +22,12 @@ export class ProductController {
 
   @MessagePattern('create-post')
   async createProduct(data) {
-return this.productService.createBlog(data);
+try {
+  return this.productService.createBlog(data)
+} catch (error) {
+  console.log(error);
+  
+};
   
 }
 
@@ -37,7 +42,7 @@ async updateBlog(data) {
   return this.productService.updateBlog(data);
 }
 
-@MessagePattern('detele-post')
+@MessagePattern('delete-post')
 async deleteBlog(data) {
   return this.productService.deleteBlog(data);
 }

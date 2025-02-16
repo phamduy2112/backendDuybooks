@@ -41,11 +41,11 @@ addFriend(payload: any) {
 
   @MessagePattern('status-friend')
   updateStatusFriend(data) {
-    return this.friendsService.statusAddFriend(data.status,+data.id);
+    return this.friendsService.statusAddFriend(data.status,+data.id,data.user_id);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.friendsService.remove(+id);
+  @MessagePattern('delete-friend')
+  remove(payload:any) {
+    return this.friendsService.deleteFriend(payload);
   }
 }

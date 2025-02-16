@@ -12,6 +12,10 @@ async createBlog(dataCreate) {
     try {
         const { user_id, content, visibility, files } = dataCreate; // Đổi 'file' thành 'files' để hỗ trợ nhiều ảnh
 
+        const existingUser=await this.prismaService.users.findUnique({where:{id:user_id}});
+        if(!existingUser){
+            return responseSend('', 'User not found',400);
+        }
         const newPost = await this.prismaService.$transaction(async (prisma) => {
             const post = await prisma.posts.create({
                 data: { user_id, content, visibility }
@@ -78,11 +82,16 @@ async updateBlog(dataCreate){
    
  
 }
-async deleteBlog(dataCreate){
+async deleteBlog(dataCreate:{id:string}){
     try {
         const createBlog = await this.prismaService.posts.delete({
      
-            where:{id:dataCreate.id}
+            where:{id:+dataCreate.id}
+        })
+        const deleteImage=await this.prismaService.post_images.deleteMany({
+            where:{
+                post_id:+dataCreate.id
+            }
         })
      
         return responseSend(createBlog, "Sửa bài viết thành công", 200);

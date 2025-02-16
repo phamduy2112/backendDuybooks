@@ -1,11 +1,11 @@
-import { BadRequestException, Body, Controller, Delete, Get, Get, Headers, Inject, Param, Post, Put, UploadedFile, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Headers, Inject, InternalServerErrorException, Param, Post, Put, UploadedFile, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { GetUser } from 'src/decorator/get-user.decorator';
 
-@Controller('product')
+@Controller('blog')
 export class ProductController {
     constructor(
         @Inject("PRODUCT_SERVICE") private blogService:ClientProxy,
@@ -15,13 +15,14 @@ export class ProductController {
 
 
     ){}
-    @Post("/create-post")
-    @UseInterceptors(FileInterceptor('file')) // Nhận file từ request
+    @Post("create-post")
+    @UseInterceptors(FilesInterceptor('files', 10)) // Nhận tối đa 10 file
     async createPost(
-        @GetUser() userId: number,
-        @Body() payload,
+        @Headers("authorization") authHeader:string,
+                @Body() payload,
         @UploadedFiles() files: any[]
     ) {
+       try {
         if (!files || files.length === 0) {
             throw new BadRequestException("Cần ít nhất một hình ảnh.");
         }
@@ -33,9 +34,10 @@ export class ProductController {
     
         // Lấy danh sách URL từ kết quả upload
         const imageUrls = uploadResponses.map(res => res.secure_url);
-    
+        const decoded=await firstValueFrom(this.authService.send("verify-token",{authHeader}))
+        const userId=decoded.id;
         const data = {
-            user_id: userId,
+            user_id: Number(userId),
             content: payload.content,
             visibility: payload.visibility,
             files: imageUrls, // Chứa danh sách ảnh
@@ -44,8 +46,16 @@ export class ProductController {
         // Gửi dữ liệu qua microservice hoặc lưu vào database
         const response = await this.blogService.send("create-post", data);
         return response;
+       } catch (error) {
+        console.log(error);
+        
+       }
     }
-    
+    private getCloudinaryPublicId(imageUrl: string): string {
+        const parts = imageUrl.split('/');
+        const filename = parts[parts.length - 1]; // Lấy tên file có đuôi .jpg, .png
+        return filename.split('.')[0]; // Bỏ phần mở rộng
+    }
     @Get("/get-save-post")
     
     async getSaveBlog(@Headers("authorization") authHeader:string,@GetUser() userId: number){
@@ -84,15 +94,34 @@ export class ProductController {
         const responsive=await this.blogService.send("create-save-post",data)
         return responsive
     }
-    @Delete("/delete-post")
-    async deletePost( @Param('id') id: string){
+    @Delete("/delete-post/:id") 
+    async deletePost(@Param('id') id: string) {
+        try {
+            const data = { id };
+    
+            // 1️⃣ Gọi API từ blog service để lấy danh sách hình ảnh của bài viết
+            const getImagePostById: { image_url: string }[] = await lastValueFrom(
+                this.blogService.send('get-image-post', data)
+            );
+    
 
-                const data={
-               
-                    id
-                }
-        const responsive=await this.blogService.send("create-save-post",data)
-        return responsive
+                
+            // // 2️⃣ Xóa hình ảnh trên Cloudinary
+            for (const image of getImagePostById) { // ✅ Dùng getImagePostById, không phải postImages
+                const publicId = this.getCloudinaryPublicId(image.image_url);
+                console.log(publicId);
+                
+                await this.cloudinaryService.deleteMedia(publicId);
+            }
+    
+            // // 3️⃣ Gửi request xóa bài viết đến blog service
+            const response = await lastValueFrom(this.blogService.send("delete-post", data));
+    
+            return response;
+        } catch (error) {
+            console.error("Lỗi khi xóa bài viết:", error);
+            throw new InternalServerErrorException("Không thể xóa bài viết");
+        }
     }
 @Get('get-post')
 async getPost( @Param('id') id: string,@Body() payload){

@@ -8,6 +8,8 @@ import { UserController } from './user/user.controller';
 import { FriendController } from './friend/friend.controller';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { CommentController } from './comment/comment.controller';
+import { ReactionsController } from './reactions/reactions.controller';
 
 @Module({
   imports: [
@@ -70,7 +72,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
       },
     ])
   ],
-  controllers: [AppController, ProductController, AuthController, UserController, FriendController],
+  controllers: [AppController, ProductController, AuthController, UserController, FriendController, CommentController, ReactionsController],
   providers: [AppService],
 })
 export class AppModule {}

@@ -279,7 +279,7 @@ private async verifyOtp(inputCode: string) {
   
       // Hash the new password using bcrypt
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-  
+      
        // Cập nhật mật khẩu trong cơ sở dữ liệu
        await this.prismaService.users.update({
         where: { id: checkEmail.id },

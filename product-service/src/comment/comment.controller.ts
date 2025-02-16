@@ -12,7 +12,7 @@ export class CommentController {
   @MessagePattern("get-comment-by-id-post")
   async getCommentByIdPost(data){
     try {
-      return this.commentService.createCommentPost(data);
+      return this.commentService.getCommentsWithReplies(data);
     } catch (error) {
       console.log(error);
       
