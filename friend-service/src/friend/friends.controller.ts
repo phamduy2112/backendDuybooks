@@ -18,10 +18,15 @@ export class FriendsController {
     return this.friendsService.findAll();
   }
 
+  @MessagePattern('get-friend-by-id-friend')
+  getFriendsByFriendId(friendId: string) {
+    return this.friendsService.getFriendsByFriendId(+friendId);
+  }
+
   @MessagePattern('get-friend')
   findOne(payload:any) {
     try {
-      return this.friendsService.findOne(+payload.friend_id);
+      return this.friendsService.findOne(+payload.user_id, payload.status);
 
     } catch (error) {
         console.log(error);

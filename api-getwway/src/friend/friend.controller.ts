@@ -36,10 +36,20 @@ export class FriendController {
     }
 
     @Get('/get-friend/:friendId')
-    async getFriend(@Param('friendId') friendId:string,@Body() payload){
+    async getFriendById(@Param('friendId') friendId: string) {
+        return await lastValueFrom(this.friendService.send("get-friend-by-id-friend",friendId))
+    
+    }
+    @Get('/get-friend-list-user')
+    async getFriend(
+      @Headers("authorization") authHeader:string,
+
+      @Body() payload){
       try {
+        const decoded=await firstValueFrom(this.authService.send("verify-token",{authHeader}))
+        const userId=+decoded.id;
         const data={
-            friend_id:friendId,
+            user_id:userId,
             ...payload
         }
 // get-friend

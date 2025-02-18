@@ -100,11 +100,20 @@ export class FriendsService {
     return `This action returns all friends`;
   }
 
-  async findOne(id: number) {
+  async findOne(id: number,status:string) {
     try {
-      const getUserFriendById=await this.prismaService.friends.findFirst({
+      const existingUser=await this.prismaService.users.findOne({
         where:{
           id
+        }
+      })
+      if(!existingUser){
+        return responseSend(null, "Người dùng không tồn tại", 404);
+      }
+      const getUserFriendById=await this.prismaService.friends.findFirst({
+        where:{
+          id,
+          status,
         }
       })
       return responseSend(getUserFriendById, "Thành công", 200);
@@ -112,6 +121,31 @@ export class FriendsService {
     } catch (error) {
       console.log(error);
       
+    }
+  }
+  async getFriendsByFriendId(friendId:number){
+    try {
+      const existingUser=await this.prismaService.users.findOne({
+        where:{
+          id:friendId
+        }
+      })
+      if(!existingUser){
+        return responseSend(null, "Người dùng không tồn tại", 404);
+      }
+      const friends=await this.prismaService.friends.findMany({
+        where:{
+          OR:[
+            
+            { friend_id:friendId }
+
+          ],
+          status:"accepted"
+        }
+      })
+      return responseSend(friends, "Thành công", 200);
+    } catch (error) {
+      console.log(error);
     }
   }
 
