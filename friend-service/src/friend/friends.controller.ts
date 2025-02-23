@@ -53,4 +53,11 @@ addFriend(payload: any) {
   remove(payload:any) {
     return this.friendsService.deleteFriend(payload);
   }
+
+  @MessagePattern('get-random-friends-no-add-friend')
+  getRandomFriendsNoAddFriend(payload){
+    const {user_id,limit}=payload
+    return this.friendsService.getRandomUnfriendedUsers(user_id,+limit)
+  }
+
 }

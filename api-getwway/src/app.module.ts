@@ -10,6 +10,7 @@ import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { CommentController } from './comment/comment.controller';
 import { ReactionsController } from './reactions/reactions.controller';
+import { MessageController } from './message/message.controller';
 
 @Module({
   imports: [
@@ -21,6 +22,17 @@ import { ReactionsController } from './reactions/reactions.controller';
         options: {
           urls: ['amqp://guest:guest@localhost:5672'],
           queue: 'product_queue',
+          queueOptions: {
+            durable: false,
+          },
+        },
+      },
+        {
+        name: 'MESSAGE_SERVICE',
+        transport: Transport.RMQ,
+        options: {
+          urls: ['amqp://guest:guest@localhost:5672'],
+          queue: 'message_queue',
           queueOptions: {
             durable: false,
           },
@@ -72,7 +84,7 @@ import { ReactionsController } from './reactions/reactions.controller';
       },
     ])
   ],
-  controllers: [AppController, ProductController, AuthController, UserController, FriendController, CommentController, ReactionsController],
+  controllers: [AppController, ProductController, AuthController, UserController, FriendController, CommentController, ReactionsController, MessageController],
   providers: [AppService],
 })
 export class AppModule {}

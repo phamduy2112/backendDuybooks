@@ -83,4 +83,18 @@ return await lastValueFrom(this.friendService.send('get-friend',data))
     
     }
   
+    @Get('get-random-friends-no-add-friend/:limit')
+    async getRandomFriendsNoAddFriend(@Headers("authorization") authHeader:string,    @Param('limit') limit:string){
+      const decoded=await firstValueFrom(this.authService.send("verify-token",{authHeader}))
+                        const userId=+decoded.id;
+
+      const data={
+        userId,
+        limit
+    }
+// console.log(data);
+
+    return await lastValueFrom(this.friendService.send("get-random-friends-no-add-friend",data))
+    }  
+    
 }

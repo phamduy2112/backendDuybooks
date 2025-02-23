@@ -102,7 +102,7 @@ export class FriendsService {
 
   async findOne(id: number,status:string) {
     try {
-      const existingUser=await this.prismaService.users.findOne({
+      const existingUser=await this.prismaService.users.findFirst({
         where:{
           id
         }
@@ -125,7 +125,7 @@ export class FriendsService {
   }
   async getFriendsByFriendId(friendId:number){
     try {
-      const existingUser=await this.prismaService.users.findOne({
+      const existingUser=await this.prismaService.users.findFirst({
         where:{
           id:friendId
         }
@@ -174,4 +174,44 @@ export class FriendsService {
       
     }
   }
+
+  async getRandomUnfriendedUsers(userId: number = 2, limit: number) {
+    try {
+        console.log(userId, limit);
+        
+        const friends = await this.prismaService.friends.findMany({
+            where: {
+                OR: [
+                    { user_id: userId },
+                    { friend_id: userId }
+                ]
+            },
+            select: {
+                user_id: true,
+                friend_id: true
+            }
+        });
+
+        const friendIds = new Set([
+            ...friends.map(f => f.user_id),
+            ...friends.map(f => f.friend_id)
+        ]);
+
+        const unfriendedUsers = await this.prismaService.users.findMany({
+            where: {
+                AND: [
+                    { id: { not: userId } }, // Không lấy chính mình
+                    { id: { notIn: Array.from(friendIds) } }, // Không lấy người đã kết bạn
+                    { status: "active" } // Lấy những người có status là "active"
+                ]
+            },
+            take: limit
+        });
+
+        return responseSend(unfriendedUsers, "Thành công!", 200);
+    } catch (error) {
+        console.error(error);
+        return responseSend(null, "Có lỗi xảy ra!", 500);
+    }
+}
 }

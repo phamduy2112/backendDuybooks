@@ -32,12 +32,14 @@ export class UserService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    const updatedUser  = await this.prismaService.users.update({
+  await this.prismaService.users.update({
       where: { id: id }, // Điều kiện tìm kiếm người dùng
       data: updateUserDto, // Dữ liệu cập nhật
   });
-  
-  return responseSend(updatedUser, "Cập nhận người dùng thành công!", 200);
+  const userDetail = await this.prismaService.users.findFirst({
+    where: { id: id }
+  })
+  return responseSend(userDetail, "Cập nhận người dùng thành công!", 200);
 }  
 
   remove(id: number) {

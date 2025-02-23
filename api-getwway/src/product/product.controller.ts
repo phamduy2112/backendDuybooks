@@ -5,7 +5,7 @@ import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { GetUser } from 'src/decorator/get-user.decorator';
 
-@Controller('blog')
+@Controller('post')
 export class ProductController {
     constructor(
         @Inject("PRODUCT_SERVICE") private blogService:ClientProxy,
@@ -18,39 +18,44 @@ export class ProductController {
     @Post("create-post")
     @UseInterceptors(FilesInterceptor('files', 10)) // Nhận tối đa 10 file
     async createPost(
-        @Headers("authorization") authHeader:string,
-                @Body() payload,
-        @UploadedFiles() files: any[]
+        @Headers("authorization") authHeader: string,
+        @Body() payload,
+        @UploadedFiles() files?: any[]
     ) {
-       try {
-        if (!files || files.length === 0) {
-            throw new BadRequestException("Cần ít nhất một hình ảnh.");
+        try {
+            const decoded = await firstValueFrom(this.authService.send("verify-token", { authHeader }));
+            const userId = decoded.id;
+    
+            let imageUrls: string[] = [];
+    
+            // Nếu có file ảnh, upload lên Cloudinary
+            if (files && files.length > 0) {
+                const uploadResponses = await Promise.all(
+                    files.map(file => this.cloudinaryService.uploadMedia(file.buffer))
+                );
+                imageUrls = uploadResponses.map(res => res.secure_url);
+            }
+    
+            // Tạo object data, chỉ thêm files nếu có ảnh
+            const data: any = {
+                user_id: Number(userId),
+                content: payload.content,
+                visibility: payload.visibility,
+            };
+    
+            if (imageUrls.length > 0) {
+                data.files = imageUrls;
+            }
+    
+            // Gửi dữ liệu qua microservice hoặc lưu vào database
+            const response = await this.blogService.send("create-post", data);
+            return response;
+        } catch (error) {
+            console.log(error);
+            throw new InternalServerErrorException("Lỗi tạo bài viết");
         }
-    
-        // Upload tất cả ảnh lên Cloudinary cùng lúc
-        const uploadResponses = await Promise.all(
-            files.map(file => this.cloudinaryService.uploadMedia(file.buffer))
-        );
-    
-        // Lấy danh sách URL từ kết quả upload
-        const imageUrls = uploadResponses.map(res => res.secure_url);
-        const decoded=await firstValueFrom(this.authService.send("verify-token",{authHeader}))
-        const userId=decoded.id;
-        const data = {
-            user_id: Number(userId),
-            content: payload.content,
-            visibility: payload.visibility,
-            files: imageUrls, // Chứa danh sách ảnh
-        };
-    
-        // Gửi dữ liệu qua microservice hoặc lưu vào database
-        const response = await this.blogService.send("create-post", data);
-        return response;
-       } catch (error) {
-        console.log(error);
-        
-       }
     }
+    
     private getCloudinaryPublicId(imageUrl: string): string {
         const parts = imageUrl.split('/');
         const filename = parts[parts.length - 1]; // Lấy tên file có đuôi .jpg, .png
