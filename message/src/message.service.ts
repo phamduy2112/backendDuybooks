@@ -6,6 +6,7 @@ export class MessageService {
     { sender: 'Alice', message: 'Hello from API Gateway' },
     { sender: 'Bob', message: 'Hi Alice!' }
   ];
+  
   saveMessage(payload: { sender: string; message: string }) {
     console.log('Saving message:', payload);
     return { status: 'success', message: 'Message saved successfully' };
