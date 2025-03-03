@@ -33,8 +33,8 @@ try {
 
 @MessagePattern('get-post')
 async getPost(data){
-  const {id,visibility}=data
-return this.productService.getPostsByVisibility(id,visibility)
+  const {user_id,visibility}=data
+return this.productService.getPostsByVisibility(user_id,visibility)
 }
 
 @MessagePattern('update-post')

@@ -39,31 +39,77 @@ async createBlog(dataCreate) {
         return responseSend(null, "Lỗi server", 500);
     }
 }
+async getFriendIds(userId: number): Promise<number[]> {
+    const friends = await this.prismaService.friends.findMany({
+      where: {
+        OR: [
+          { user_id: userId, status: 'accepted' },
+          { friend_id: userId, status: 'accepted' },
+        ],
+      },
+      select: {
+        user_id: true,
+        friend_id: true,
+      },
+    });
+  
+    const friendIds = friends.map((friend) =>
+      friend.user_id === userId ? friend.friend_id : friend.user_id,
+    );
+  
+    return friendIds;
+  }
 async getPostsByVisibility(userId: number, visibility: string) {
-    let posts;
+    const friendIds = await this.getFriendIds(userId);
+
     // friends_only
-    if (visibility === 'private') {
-      // Kiểm tra xem người dùng có phải là bạn bè của chủ bài viết hay không
-      posts = await this.prismaService.posts.findMany({
+    const posts = await this.prismaService.posts.findMany({
         where: {
-          visibility: 'private',
+          visibility: visibility === 'private' ? 'private' : visibility,
           OR: [
-            { user_id: userId },  // Chủ bài viết
-            {
-            //   user_id: {
-            //     in: await this.getFriendIds(userId), // Những người bạn của người dùng
-            //   },
-            },
+            { user_id: userId }, // Chủ bài viết
+            { user_id: { in: visibility === 'private' ? friendIds : [] } }, // Bạn bè
           ],
         },
+        select: {
+          id: true,
+          content: true,
+          created_at: true,
+          users: {
+            select: {
+              id: true,
+              full_name: true,
+              avatar_url: true,
+            },
+          },
+          post_images: {
+            select: {
+              image_url: true,
+            },
+          },
+          comments: {
+            take: 3,
+            orderBy: { created_at: 'desc' }, // Sắp xếp comment mới nhất
+            select: {
+              id: true,
+              content: true,
+              users: {
+                select: {
+                  id: true,
+                  full_name: true,
+                  avatar_url: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          created_at: 'desc', // Sắp xếp bài viết mới nhất
+        },
       });
-    } else {
-      posts = await this.prismaService.posts.findMany({
-        where: { visibility: visibility },
-      });
+  
+      return responseSend(posts, "Thành công", 200);  
     }
-    return posts;
-  }
 async updateBlog(dataCreate){
     try {
         const {content,visibility,id}=dataCreate

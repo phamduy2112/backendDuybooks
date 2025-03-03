@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Headers, Inject, InternalServerErrorException, Param, Post, Put, UploadedFile, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Headers, Inject, InternalServerErrorException, Param, Post, Put, Query, UploadedFile, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
@@ -129,13 +129,15 @@ export class ProductController {
         }
     }
 @Get('get-post')
-async getPost( @Param('id') id: string,@Body() payload){
+async getPost( @Headers("authorization") authHeader:string,  @Query('visibility') visibility: string // Lấy visibility từ query
+){
+    const decoded = await firstValueFrom(this.authService.send("verify-token", { authHeader }));
+    const userId = decoded.id;
+ const data = {
+      user_id: userId,
+      visibility: visibility || 'public' // Mặc định là 'public'
+    };
 
-    const data={
-   
-        id,
-        visibility:payload.visibility
-    }
 const responsive=await this.blogService.send("get-post",data)
 return responsive
 }
