@@ -20,7 +20,7 @@ import { MessageController } from './message/message.controller';
         name: 'PRODUCT_SERVICE',
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://guest:guest@localhost:5672'],
+          urls: ['amqp://admin:1234@localhost:5672'],
           queue: 'product_queue',
           queueOptions: {
             durable: false,
@@ -31,7 +31,7 @@ import { MessageController } from './message/message.controller';
         name: 'MESSAGE_SERVICE',
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://guest:guest@localhost:5672'],
+          urls: ['amqp://admin:1234@localhost:5672'],
           queue: 'message_queue',
           queueOptions: {
             durable: false,
@@ -42,7 +42,7 @@ import { MessageController } from './message/message.controller';
         name: 'AUTH_SERVICE',
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://guest:guest@localhost:5672'],
+          urls: ['amqp://admin:1234@localhost:5672'],
           queue: 'auth_queue',
           queueOptions: {
             durable: false,
@@ -53,7 +53,7 @@ import { MessageController } from './message/message.controller';
         name: 'USER_SERVICE',
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://guest:guest@localhost:5672'],
+          urls: ['amqp://admin:1234@localhost:5672'],
           queue: 'user_queue',
           queueOptions: {
             durable: false,
@@ -64,7 +64,7 @@ import { MessageController } from './message/message.controller';
         name: 'NOTIFICATION_SERVICE',
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://guest:guest@localhost:5672'],
+          urls: ['amqp://admin:1234@localhost:5672'],
           queue: 'notification_queue',
           queueOptions: {
             durable: false,
@@ -75,7 +75,7 @@ import { MessageController } from './message/message.controller';
         name: 'FRIEND_SERVICE',
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://guest:guest@localhost:5672'],
+          urls: ['amqp://admin:1234@localhost:5672'],
           queue: 'friend_queue',
           queueOptions: {
             durable: false,

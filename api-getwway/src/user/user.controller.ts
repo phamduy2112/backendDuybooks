@@ -30,7 +30,7 @@ export class UserController {
             message:'Lấy người dùng thành công',
             type:'update'
           }
-      this.notificationService.emit('user_updated', data)
+     
         }
         
         return getUserbyId
@@ -45,7 +45,7 @@ export class UserController {
         id:userId,
         ...payload
       }
- 
+      this.notificationService.emit('user_updated', dataUpdate)
       
       const getUserbyId=await lastValueFrom(this.userService.send("update-user",dataUpdate))
       console.log(getUserbyId);

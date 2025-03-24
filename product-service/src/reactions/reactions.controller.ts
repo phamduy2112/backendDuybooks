@@ -26,8 +26,9 @@ export class ReactionsController {
     return this.reactionsService.getReactionByComment(data)
   }
 
-  @MessagePattern("get-reactions-by-post")
+  @MessagePattern("get-reactions-count-by-post")
   async getReactionByPost(data){
+    console.log(data)
 
     return this.reactionsService.getReactionCountsByPost(data)
   }
@@ -37,4 +38,12 @@ export class ReactionsController {
 
     return this.reactionsService.getReactionCountsByComment(data)
   }
+  
+  @MessagePattern("get-reactions-by-user")
+  async getReactionByUser(data){
+    return this.reactionsService.getReactionPostByUser(data)
+  }
+
+
 }
+

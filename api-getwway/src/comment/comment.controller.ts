@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, Inject, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Inject, Param, Post, Put, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { lastValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { GetUser } from 'src/decorator/get-user.decorator';
 
 @Controller('comment')
@@ -8,7 +8,8 @@ export class CommentController {
     constructor(
 
                 @Inject("PRODUCT_SERVICE") private commentService:ClientProxy,
-        
+                @Inject("AUTH_SERVICE") private authService:ClientProxy,
+
      ) {}
 
      @Get('get-comment-by-id-post')
@@ -26,10 +27,15 @@ export class CommentController {
      }
 
      @Post('create-comment')
-     async createComment(@Body() comment: any, @GetUser() userId: number): Promise<any> {
+     async createComment(
+      @Headers("authorization") authHeader:string, 
+     @Body() comment: any
+   ) {
       try {
+         const decoded=await firstValueFrom(this.authService.send("verify-token",{authHeader}))
+            const userId=+decoded.id;
          const data={
-            post_id:comment.post_id,
+            post_id:+comment.post_id,
             user_id:userId,
             content:comment.content
          }
@@ -41,16 +47,22 @@ export class CommentController {
     
      }
      @Post('create-comment-reply')
-     async createCommentReplies(@Body() comment: any, @GetUser() userId: number): Promise<any> {
+     async createCommentReplies(@Body() comment: any,
+     @Headers("authorization") authHeader:string,
+   
+   
+   ): Promise<any> {
       try {
+         const decoded=await firstValueFrom(this.authService.send("verify-token",{authHeader}))
+         const userId=+decoded.id;
          //  post_id, user_id, content, parent_id
          const data={
-            post_id:comment.post_id,
+            post_id:+comment.post_id,
             user_id:userId,
             content:comment.content,
-            parent_id:comment.parent_id
+            parent_id:+comment.parent_id
          }
-         return await lastValueFrom(this.commentService.send('create-comment',data))
+         return await lastValueFrom(this.commentService.send('create-comment-reply',data))
       } catch (error) {
          
       }
@@ -59,10 +71,11 @@ export class CommentController {
      }
 
      @Put('update-comment/:id')
-     async updateCommentPost(@Param('id') id:string){
+     async updateCommentPost(@Param('id') id:string,@Body() comment: any): Promise<any> {
       try {
          const data={
-            id
+            id:+id,
+            content:comment.content
          }
          return await lastValueFrom(this.commentService.send('update-comment',data))
       } catch (error) {

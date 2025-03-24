@@ -14,7 +14,7 @@ export class FriendsService {
     return 'This action adds a new friend';
   }
   async addFriend(payload: CreateFriendDto) {
-    // Kiểm tra xem ID người dùng và ID bạn có hợp lệ không
+
     if (!payload.user_id || !payload.friend_id) {
       return responseSend(null, "ID người dùng hoặc ID bạn không hợp lệ", 400);
     }
@@ -67,7 +67,7 @@ export class FriendsService {
       const existingFriendRequest = await this.prismaService.friends.findUnique({
         where: { id },
       });
-  
+      console.log(existingFriendRequest);
       if (!existingFriendRequest) {
         return responseSend(null, "Lời mời kết bạn không tồn tại", 404);
       }
@@ -80,17 +80,21 @@ export class FriendsService {
       if (existingFriendRequest.status !== "pending") {
         return responseSend(null, "Lời mời kết bạn đã được xử lý", 400);
       }
-  
-      // Cập nhật trạng thái
       const updateStatus = status === "accept" ? "accepted" : "rejected";
+
+      if (updateStatus === "rejected") {
+        await this.prismaService.friends.delete({ where: { id } });
+        return responseSend(null, "Lời kết bạn đã bị từ chối", 200);
+      }
+      
+      // Nếu không phải "rejected", tiến hành cập nhật
       const updateFriend = await this.prismaService.friends.update({
         where: { id },
         data: { status: updateStatus },
       });
-  
-      // Phản hồi
-      const message = status === "accept" ? "Kết bạn thành công" : "Lời kết bạn đã bị từ chối";
-      return responseSend(updateFriend, message, 200);
+      
+      return responseSend(updateFriend, "Kết bạn thành công", 200);
+      
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái bạn bè:", error);
       return responseSend(null, "Đã xảy ra lỗi, vui lòng thử lại sau!", 500);
@@ -100,54 +104,35 @@ export class FriendsService {
     return `This action returns all friends`;
   }
 
-  async findOne(id: number,status:string) {
+  async getFriendsById(userId: number, status: string) {
     try {
-      const existingUser=await this.prismaService.users.findFirst({
-        where:{
-          id
-        }
-      })
-      if(!existingUser){
+      // Kiểm tra xem người dùng có tồn tại không
+      const existingUser = await this.prismaService.users.findFirst({
+        where: { id: userId }
+      });
+  
+      if (!existingUser) {
         return responseSend(null, "Người dùng không tồn tại", 404);
       }
-      const getUserFriendById=await this.prismaService.friends.findFirst({
-        where:{
-          id,
-          status,
-        }
-      })
-      return responseSend(getUserFriendById, "Thành công", 200);
-
-    } catch (error) {
-      console.log(error);
-      
-    }
-  }
-  async getFriendsByFriendId(friendId:number){
-    try {
-      const existingUser=await this.prismaService.users.findFirst({
-        where:{
-          id:friendId
-        }
-      })
-      if(!existingUser){
-        return responseSend(null, "Người dùng không tồn tại", 404);
-      }
-      const friends=await this.prismaService.friends.findMany({
-        where:{
-          OR:[
-            
-            { friend_id:friendId }
-
+  
+      // Lấy danh sách bạn bè theo cả `user_id` và `friend_id`
+      const friends = await this.prismaService.friends.findMany({
+        where: {
+          OR: [
+            { user_id: userId },
+            { friend_id: userId }
           ],
-          status:"accepted"
+          status
         }
-      })
+      });
+  
       return responseSend(friends, "Thành công", 200);
     } catch (error) {
-      console.log(error);
+      console.error("Lỗi khi lấy danh sách bạn bè:", error);
+      return responseSend(null, "Đã xảy ra lỗi, vui lòng thử lại sau!", 500);
     }
   }
+  
 
   update(id: number, updateFriendDto: UpdateFriendDto) {
     return `This action updates a #${id} friend`;
@@ -177,7 +162,6 @@ export class FriendsService {
 
   async getRandomUnfriendedUsers(userId: number = 2, limit: number) {
     try {
-        console.log(userId, limit);
         
         const friends = await this.prismaService.friends.findMany({
             where: {

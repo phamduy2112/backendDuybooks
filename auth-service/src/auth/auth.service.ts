@@ -5,6 +5,8 @@ import * as bcrypt from 'bcrypt';
 import { responseSend } from 'src/model/response';
 import { IPayloadChangePassword, IPayloadLogin, IPayLoadRegister, TPayloadUser } from 'src/types/auth.interface';
 import { MailerService } from '@nestjs-modules/mailer';
+import { AuthLoginDto, AuthRegisterDto } from './dto/create-auth-service.dto';
+import { Status } from 'src/types/enum/user.enum';
 
 @Injectable()
 export class AuthService {
@@ -81,14 +83,14 @@ private async verifyOtp(inputCode: string) {
     }
   }
 
-  private async generaToken(payload: any) {
+  private async generaToken(payload: any):Promise<any> {
     const access_token = await this.jwtService.signAsync(payload);
     return { access_token };
   }
   private async checkStatusUser(){
 
   }
-  async verifyToken(token: string) {
+  async verifyToken(token: string){
     try {
       const decoded = await this.jwtService.verifyAsync(token);
       if (!decoded) {
@@ -109,7 +111,7 @@ private async verifyOtp(inputCode: string) {
       if(!user) return responseSend('', "Không tồn tại email hoặc password", 400);
       const isCheckPassword=await bcrypt.compare(TDataLogin.password,user.password);
       if(!isCheckPassword) return responseSend('', "Không tồn tại email hoặc password", 400);
-      if(user.status=="inactive"){ 
+      if(user.status==Status.INACTIVE){ 
         const sendEmailToUser=await this.sendVerificationEmail(user.email,user.id)
         return responseSend("","Bạn cần xác nhận tài khoản thông qua email",400)};
       const token= await this.generaToken({id:user.id,email:user.email,role:user.role});
@@ -123,16 +125,16 @@ private async verifyOtp(inputCode: string) {
       }, 'Thành công', 200);
  
     } catch (error) {
-      
+      return error
     }
   }
 
-  async registerUser(TRegisterUser: IPayLoadRegister) {
+  async registerUser(DRegisterUser: AuthRegisterDto) {
     try {
-      const hashPassword = await this.hashPassword(TRegisterUser.password);
+      const hashPassword:string= await this.hashPassword(DRegisterUser.password);
       const existingUser = await this.prismaService.users.findFirst({
         where: {
-          email: TRegisterUser.email,
+          email: DRegisterUser.email,
         }
       });
 
@@ -142,7 +144,7 @@ private async verifyOtp(inputCode: string) {
 
       const addUser = await this.prismaService.users.create({
         data: {
-          ...TRegisterUser,
+          ...DRegisterUser,
           password: hashPassword,
           role: 'user',
           status: 'inactive',
@@ -278,7 +280,7 @@ private async verifyOtp(inputCode: string) {
       }
   
       // Hash the new password using bcrypt
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const hashedPassword:string = await bcrypt.hash(newPassword, 10);
       
        // Cập nhật mật khẩu trong cơ sở dữ liệu
        await this.prismaService.users.update({

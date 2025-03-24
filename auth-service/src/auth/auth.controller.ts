@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { log } from 'node:console';
 import { JwtService } from '@nestjs/jwt';
 import { IPayloadChangePassword, IPayloadLogin, IPayLoadRegister } from 'src/types/auth.interface';
+import { AuthRegisterDto } from './dto/create-auth-service.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -24,7 +25,7 @@ export class AuthController {
       }
 
     @MessagePattern("register-user")
-    async registerUser(payload:IPayLoadRegister){
+    async registerUser(payload:AuthRegisterDto){
         try{
             return this.authService.registerUser(payload);
         }catch(e){
